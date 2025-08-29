@@ -8,27 +8,89 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles for icons since we can't use lucide-react easily in this setup */
-        .icon {
-            width: 20px;
-            height: 20px;
-            display: inline-block;
-        }
-        .icon-small {
-            width: 16px;
-            height: 16px;
-        }
-        .icon-tiny {
-            width: 12px;
-            height: 12px;
-        }
-    </style>
 </head>
 <body>
     <div id="root"></div>
     <script type="text/babel">
-        const QuickNotesApp = () => {
+        // 🔒 CHANGE THIS PASSWORD TO WHATEVER YOU WANT
+        const CORRECT_PASSWORD = "91";
+
+        const App = () => {
+            const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+            const [passwordInput, setPasswordInput] = React.useState('');
+            const [showError, setShowError] = React.useState(false);
+
+            React.useEffect(() => {
+                // Check if user was already logged in
+                const savedAuth = sessionStorage.getItem('notesAuthenticated');
+                if (savedAuth === 'true') {
+                    setIsAuthenticated(true);
+                }
+            }, []);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (passwordInput === CORRECT_PASSWORD) {
+                    setIsAuthenticated(true);
+                    sessionStorage.setItem('notesAuthenticated', 'true');
+                    setShowError(false);
+                } else {
+                    setShowError(true);
+                    setPasswordInput('');
+                }
+            };
+
+            const handleLogout = () => {
+                setIsAuthenticated(false);
+                sessionStorage.removeItem('notesAuthenticated');
+            };
+
+            // Login Screen
+            if (!isAuthenticated) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 w-full max-w-md">
+                            <div className="text-center mb-6">
+                                <div className="text-4xl mb-4">🔒</div>
+                                <h1 className="text-2xl font-bold text-slate-800 mb-2">Quick Notes</h1>
+                                <p className="text-slate-600">Enter password to access your notes</p>
+                            </div>
+                            
+                            <form onSubmit={handleLogin}>
+                                <div className="mb-4">
+                                    <input
+                                        type="password"
+                                        value={passwordInput}
+                                        onChange={(e) => setPasswordInput(e.target.value)}
+                                        placeholder="Enter password"
+                                        className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        autoFocus
+                                    />
+                                </div>
+                                
+                                {showError && (
+                                    <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                                        ❌ Incorrect password. Please try again.
+                                    </div>
+                                )}
+                                
+                                <button
+                                    type="submit"
+                                    className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                >
+                                    🔓 Access Notes
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Main App (same as before)
+            return <QuickNotesApp onLogout={handleLogout} />;
+        };
+
+        const QuickNotesApp = ({ onLogout }) => {
             const [notes, setNotes] = React.useState([]);
             const [newNote, setNewNote] = React.useState('');
             const [selectedCategory, setSelectedCategory] = React.useState('today');
@@ -131,8 +193,14 @@
             return (
                 <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
                     <div className="max-w-4xl mx-auto">
-                        {/* Header */}
-                        <div className="text-center mb-8">
+                        {/* Header with Logout */}
+                        <div className="text-center mb-8 relative">
+                            <button
+                                onClick={onLogout}
+                                className="absolute right-0 top-0 px-3 py-1 text-sm bg-slate-200 text-slate-600 rounded hover:bg-slate-300 transition-colors"
+                            >
+                                🚪 Logout
+                            </button>
                             <h1 className="text-3xl font-bold text-slate-800 mb-2">Quick Notes</h1>
                             <p className="text-slate-600">Capture your thoughts, action items, and follow-ups</p>
                         </div>
@@ -310,7 +378,7 @@
             );
         };
 
-        ReactDOM.render(<QuickNotesApp />, document.getElementById('root'));
+        ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
 </html>
